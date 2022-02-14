@@ -1,5 +1,10 @@
 import { Workspace } from "near-workspaces-ava";
-import { test_nft_transfer_compliance, assert_token_owner } from "./nep171";
+
+import { assert_nep171_compliance } from "./core";
+import { assert_nep177_compliance } from "./metadata";
+// import { assert_nep178_compliance } from "./enumeration";
+import { assert_nep297_compliance } from "./events";
+// import { assert_event_json } from "./test-utils";
 
 const TWENTY_NEAR = "20000000000000000000000000";
 const workspace = Workspace.init(async ({ root }) => {
@@ -18,55 +23,64 @@ const workspace = Workspace.init(async ({ root }) => {
   return { root, contract, alice };
 });
 
-workspace.test(
-  "Token and event standards (NEP171, NEP297)",
-  async (test, { contract, root, alice }) => {
-    let call;
+workspace.test("nft-contract", async (test, { contract, root, alice }) => {
+  // Mint a token (required for the rest of the tests to pass)
+  await root.call(
+    contract,
+    "nft_mint",
+    {},
+    { attachedDeposit: "1500000000000000000000" }
+  );
+  test.log("Token minting successful");
 
-    // Mint a token (NEP297)
-    call = await root
-      .call_raw(
-        contract,
-        "mint",
-        {},
-        { attachedDeposit: "1500000000000000000000" }
-      )
-      .catch(console.error);
-    test.true(call.succeeded, "Root couldn't mint token");
-    test.is(call.logs.length, 1, "More than one mint log");
-    test.is(
-      call.logs[0],
-      'EVENT_JSON:{"standard":"nep171","version":"1.0.0","event":"nft_mint","data":[{"owner_id":"test.near","token_ids":["0"]}]}',
-      "Bad minting logs"
-    );
-    await assert_token_owner(test, { contract, token_id: "0", owner: root });
-
-    // `nft_transfer` (NEP171 and NEP297)
-    await test_nft_transfer_compliance(test, {
+  // This transfers the token to `other_account` and back, testing the methods
+  // described in the NEP171 standard
+  // TODO: nft_transfer_call
+  await assert_nep171_compliance(
+    {
+      test,
       contract,
-      from: root,
-      to: alice,
-      token_id: "0",
-    });
-    await assert_token_owner(test, {
-      contract,
-      token_id: "0",
-      owner: alice,
-    });
+      caller: root, // the current token owner
+      token_id: "0", // the minted token
+      other_account: alice, // account for the transfer, must exist
+      bad_token_id: "x", // ID of a token that must not exist
+    },
+    "nft-contract"
+  );
+  test.log("Complies with NEP171");
 
-    // Burning (NEP297)
-    call = await alice
-      .call_raw(contract, "burn", { token_id: "0" }, { attachedDeposit: "1" })
-      .catch(console.error);
-    test.true(call.succeeded, "Alice couldn't burn token");
-    test.is(call.logs.length, 1, "More than one burn log");
-    test.is(
-      call.logs[0],
-      'EVENT_JSON:{"standard":"nep171","version":"1.0.0","event":"nft_burn","data":[{"owner_id":"alice.test.near","token_ids":["0"]}]}',
-      "Bad minting logs"
-    );
-  }
-);
+  // await assert_nep177_compliance(
+  //   { test, contract, caller: root },
+  //   "nft-contract"
+  // );
+  // test.log("Complies with NEP178");
+
+  await assert_nep297_compliance(
+    { test, contract, minter: root, burner: alice },
+    {
+      mint_spec: {
+        method: "nft_mint",
+        args: {},
+        opts: { attachedDeposit: "1500000000000000000000" },
+      },
+      // transfer_spec: {
+      //   method: "nft_transfer",
+      //   args: { receiver_id: alice.accountId },
+      //   opts: { attachedDeposit: "1" },
+      // },
+      burn_spec: {
+        method: "nft_burn",
+        // instructs to use the token_id extracted from the mint event
+        args: { token_id: "__token_id__" },
+        opts: { attachedDeposit: "1" },
+      },
+    }
+  );
+  test.log("Complies with NEP297");
+
+  // // this allows me to see the logs, even if all tests pass
+  // test.fail();
+});
 
 // workspace.test(
 //   "statuses initialized in Workspace.init",

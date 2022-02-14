@@ -5,7 +5,6 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 near-contract-standards = { git = "https://github.com/near/near-sdk-rs", rev = "ea8c1f48e0f7fef8b5721848dc312646d3c1c20e" }

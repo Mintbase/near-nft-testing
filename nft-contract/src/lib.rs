@@ -1,4 +1,5 @@
 use near_contract_standards::non_fungible_token::{
+    self as nft_standard, metadata::NonFungibleTokenMetadataProvider,
     NonFungibleToken, Token, TokenId,
 };
 use near_sdk::{
@@ -16,6 +17,7 @@ use serde::{Serialize, Serializer};
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct NftContract {
     tokens: NonFungibleToken,
+    metadata: nft_standard::metadata::NFTContractMetadata,
     next_id: u32,
     burned: LookupSet<TokenId>,
 }
@@ -29,7 +31,6 @@ impl Serialize for NftContract {
     }
 }
 
-// FIXME: currently needed because init doesn't work
 impl Default for NftContract {
     fn default() -> Self {
         let tokens = NonFungibleToken::new(
@@ -39,11 +40,22 @@ impl Default for NftContract {
             Option::<u8>::None,
             Option::<u8>::None,
         );
+        let metadata = nft_standard::metadata::NFTContractMetadata {
+            spec: "nft-1.0.0".to_string(),
+            name: "NFT contract".to_string(),
+            symbol: "NFT".to_string(),
+            icon: None,
+            base_uri: None,
+            reference: None,
+            reference_hash: None,
+        };
+
         let next_id = 0;
         let burned = LookupSet::new("".as_bytes());
 
         Self {
             tokens,
+            metadata,
             next_id,
             burned,
         }
@@ -52,6 +64,7 @@ impl Default for NftContract {
 
 #[near_bindgen]
 impl NftContract {
+    // FIXME: (maybe) get init to work
     // #[near_sdk::init]
     // pub fn init() -> Self {
     //     let tokens = {
@@ -75,7 +88,7 @@ impl NftContract {
     // }
 
     #[payable]
-    pub fn mint(&mut self) {
+    pub fn nft_mint(&mut self) {
         assert_eq!(self.tokens.owner_id, env::predecessor_account_id());
 
         self.tokens.internal_mint(
@@ -88,7 +101,7 @@ impl NftContract {
     }
 
     #[payable]
-    pub fn burn(&mut self, token_id: TokenId) {
+    pub fn nft_burn(&mut self, token_id: TokenId) {
         let token = self.tokens.nft_token(token_id).unwrap();
         assert_eq!(token.owner_id, env::predecessor_account_id());
 
@@ -100,4 +113,17 @@ impl NftContract {
     }
 }
 
+#[near_bindgen]
+impl NonFungibleTokenMetadataProvider for NftContract {
+    fn nft_metadata(&self) -> nft_standard::metadata::NFTContractMetadata {
+        self.metadata.clone()
+    }
+}
+
 near_contract_standards::impl_non_fungible_token_core!(NftContract, tokens);
+
+// near_contract_standards::impl_non_fungible_token_approval!(NftContract, tokens);
+// near_contract_standards::impl_non_fungible_token_enumeration!(
+//     NftContract,
+//     tokens
+// );
