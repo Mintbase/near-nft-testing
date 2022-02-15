@@ -13,6 +13,12 @@ use near_sdk::{
 };
 use serde::{Serialize, Serializer};
 
+macro_rules! some_fmt {
+    ($fmt:expr, $($arg:expr),*) => {
+        Some(format!($fmt, $($arg),*))
+    };
+}
+
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct NftContract {
@@ -36,9 +42,9 @@ impl Default for NftContract {
         let tokens = NonFungibleToken::new(
             "".as_bytes(),
             env::predecessor_account_id().try_into().unwrap(),
-            Option::<u8>::None,
-            Option::<u8>::None,
-            Option::<u8>::None,
+            Some("token_metadata".as_bytes()),
+            Some("enumeration".as_bytes()),
+            Some("approval".as_bytes()),
         );
         let metadata = nft_standard::metadata::NFTContractMetadata {
             spec: "nft-1.0.0".to_string(),
@@ -94,7 +100,23 @@ impl NftContract {
         self.tokens.internal_mint(
             self.next_id.to_string(),
             self.tokens.owner_id.clone(),
-            None,
+            Some(nft_standard::metadata::TokenMetadata {
+                title: some_fmt!("NFT {}", self.next_id.to_string()),
+                description: some_fmt!(
+                    "This is NFT {}",
+                    self.next_id.to_string()
+                ),
+                media: None,
+                media_hash: None,
+                copies: Some(1),
+                issued_at: None,
+                expires_at: None,
+                starts_at: None,
+                updated_at: None,
+                extra: None,
+                reference: None,
+                reference_hash: None,
+            }),
         );
 
         self.next_id += 1;
@@ -121,9 +143,8 @@ impl NonFungibleTokenMetadataProvider for NftContract {
 }
 
 near_contract_standards::impl_non_fungible_token_core!(NftContract, tokens);
-
 // near_contract_standards::impl_non_fungible_token_approval!(NftContract, tokens);
-// near_contract_standards::impl_non_fungible_token_enumeration!(
-//     NftContract,
-//     tokens
-// );
+near_contract_standards::impl_non_fungible_token_enumeration!(
+    NftContract,
+    tokens
+);

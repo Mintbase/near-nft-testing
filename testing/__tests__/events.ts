@@ -2,12 +2,17 @@ import { NearAccount } from "near-workspaces-ava";
 import { ExecutionContext } from "ava";
 import { RpcCallSpec, RpcAssertParams } from "./test-utils";
 
-// general todo
+// coverage todo
 // - batch_mint
 // - batch_transfer
 // - batch_burn
 // - approved transfers
 // - approved burns
+
+// testing functions todo
+// - assert_nft_mint_event_log
+// - assert_nft_transfer_event_log
+// - assert_nft_burn_event_log
 
 // TODO: this function is actually bad, because it assumes a lot about the
 // methods and inner workings of a contract

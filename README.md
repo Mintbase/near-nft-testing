@@ -9,8 +9,8 @@ as some tests inside `testing`:
   - [x] `nft_mint`
   - [x] `nft_transfer`
   - [x] `nft_burn`
-- [ ] NFT Metadata (NEP177):
-  - [ ] `nft_metadata`
+- [x] NFT Metadata (NEP177):
+  - [x] `nft_metadata`
 - [ ] NFT Approvals (NEP178):
   - [ ] `nft_approve`
   - [ ] `nft_revoke`

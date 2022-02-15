@@ -1,2 +1,9 @@
 node_modules
 target
+
+testing/.cargo
+testing/Cargo.toml
+testing/Cargo.lock
+testing/target
+testing/nft-receiver
+testing/nft-sender
