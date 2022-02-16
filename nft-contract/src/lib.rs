@@ -9,6 +9,7 @@ use near_sdk::{
     // json_types::AccountId,
     near_bindgen,
     AccountId,
+    Promise,
     PromiseOrValue,
 };
 use serde::{Serialize, Serializer};
@@ -143,7 +144,7 @@ impl NonFungibleTokenMetadataProvider for NftContract {
 }
 
 near_contract_standards::impl_non_fungible_token_core!(NftContract, tokens);
-// near_contract_standards::impl_non_fungible_token_approval!(NftContract, tokens);
+near_contract_standards::impl_non_fungible_token_approval!(NftContract, tokens);
 near_contract_standards::impl_non_fungible_token_enumeration!(
     NftContract,
     tokens

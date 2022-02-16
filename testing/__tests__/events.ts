@@ -43,8 +43,7 @@ export async function assert_nep297_compliance(
     mint_spec
   );
 
-  // FIXME: work my way around this assertion, as it's not required by the spec,
-  // but I currently need for the upcoming calls
+  // FIXME: required by test, not by standard
   // => could be done by providing a callback to "clean up"
   test.is(owner_id, minter.accountId);
 

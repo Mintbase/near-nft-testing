@@ -1,6 +1,5 @@
 import { Nep171Token, RpcAssertParams } from "./test-utils";
 
-// TODO: setup function callback
 export async function assert_nep181_compliance(
   args: RpcAssertParams & {
     nft_total_supply_expected: string;
@@ -43,6 +42,7 @@ export async function assert_nft_tokens_compliance({
   nft_tokens_expected: Nep171Token[];
 }) {
   const tokens = await caller.call(contract, "nft_tokens", nft_tokens_args);
+  // TODO: Array<Token>
   test.deepEqual(tokens, nft_tokens_expected);
 }
 
@@ -83,5 +83,6 @@ export async function assert_nft_tokens_for_owner_compliance({
     "nft_tokens_for_owner",
     nft_tokens_for_owner_args
   );
+  // TODO: Array<Token>
   test.deepEqual(tokens, nft_tokens_for_owner_expected);
 }

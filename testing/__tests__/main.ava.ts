@@ -2,20 +2,20 @@ import { NearAccount, Workspace } from "near-workspaces-ava";
 
 import { assert_nep171_compliance } from "./core";
 import { assert_nep177_compliance } from "./metadata";
+import { assert_nep178_compliance } from "./approval";
 import { assert_nep181_compliance } from "./enumeration";
 import { assert_nep297_compliance } from "./events";
-import { mint_one, RpcAssertParams } from "./test-utils";
-// import { assert_event_json } from "./test-utils";
+import * as util from "./test-utils";
 
-// twenty NEAR to fund accounts
+// We can init different workspaces for different contracts :)
 const TWENTY_NEAR = "20000000000000000000000000";
-// 1.5 mNEAR
-// const FIFTEEN_HUNDRED_MICRONEAR = "1500000000000000000000";
-const TWO_MILLINEAR = "2000000000000000000000";
 const SIX_MILLINEAR = "6000000000000000000000";
 const workspace = Workspace.init(async ({ root }) => {
-  // Create account
+  // Create accounts
   const alice = await root.createAccount("alice", {
+    initialBalance: TWENTY_NEAR,
+  });
+  const bob = await root.createAccount("bob", {
     initialBalance: TWENTY_NEAR,
   });
 
@@ -26,7 +26,7 @@ const workspace = Workspace.init(async ({ root }) => {
     { attachedDeposit: SIX_MILLINEAR }
   );
 
-  return { root, contract, alice };
+  return { root, contract, alice, bob };
 });
 
 async function nft_mint_one({
@@ -47,21 +47,42 @@ async function nft_mint_one({
   return [event.data[0].token_ids[0], event.data[0].owner_id];
 }
 
+// TODO: move into the utils file
+// this function is for my own sanity
+workspace.test("utils", (test, {}) => {
+  test.true(util.is_null_or_predicate(null, (n) => n % 2 === 0));
+  test.true(util.is_null_or_predicate(2, (n) => n % 2 === 0));
+  test.false(util.is_null_or_predicate(1, (n) => n % 2 === 0));
+
+  test.true(util.isStringOrNull("abc"));
+  test.true(util.isStringOrNull(null));
+  test.false(util.isStringOrNull(42));
+  test.false(util.isStringOrNull(true));
+  test.true(util.isNumberOrNull(42));
+  test.true(util.isNumberOrNull(null));
+  test.false(util.isNumberOrNull("abc"));
+  test.false(util.isNumberOrNull(true));
+  test.true(util.isBooleanOrNull(false));
+  test.true(util.isBooleanOrNull(null));
+  test.false(util.isBooleanOrNull(42));
+  test.false(util.isBooleanOrNull("abc"));
+
+  test.true(util.is_predicate_array([0, 2, 4], (n) => n % 2 === 0));
+  test.false(util.is_predicate_array([0, 1], (n) => n % 2 === 0));
+  test.false(util.is_predicate_array(0, (n) => n % 2 === 0));
+
+  test.true(util.isStringArray(["abc", "def"]));
+  test.false(util.isStringArray(["abc", 42]));
+  test.true(util.isNumberArray([1, 2, 3]));
+  test.false(util.isNumberArray([1, false]));
+  test.true(util.isBooleanArray([true, false]));
+  test.false(util.isBooleanArray([true, 1]));
+});
+
 // TODO: contract list, all tests automatically set up for the contract
 workspace.test(
   "nft-contract::core",
-  // TODO: move minting into compliance asserter
   async (test, { contract, root, alice }) => {
-    // Mint a token (required for the rest of the tests to pass)
-    // await root.call(
-    //   contract,
-    //   "nft_mint",
-    //   {},
-    //   { attachedDeposit: TWO_MILLINEAR }
-    // );
-    // test.log("Token minting successful");
-    const [token_id, _] = await nft_mint_one({ contract, caller: root });
-
     // This transfers the token to `other_account` and back, testing the methods
     // described in the NEP171 standard
     // TODO: nft_transfer_call
@@ -70,9 +91,8 @@ workspace.test(
         test,
         contract,
         caller: root, // the current token owner
-        token_id, // the minted token
         other_account: alice, // account for the transfer, must exist
-        bad_token_id: "x", // ID of a token that must not exist
+        mint: nft_mint_one,
       },
       "nft-contract"
     );
@@ -97,6 +117,8 @@ workspace.test(
           args: {},
           opts: { attachedDeposit: SIX_MILLINEAR },
         },
+        // // transfer_spec is optional, because `nft_transfer` is part of the
+        // // core standard
         // transfer_spec: {
         //   method: "nft_transfer",
         //   args: { receiver_id: alice.accountId },
@@ -157,13 +179,13 @@ workspace.test(
           token_id: token0_id,
           owner_id: alice_id,
           metadata: default_metadata(0),
-          approved_account_ids: {}, // TODO: shouldn't this be null until I impl it?
+          approved_account_ids: {},
         },
         {
           token_id: token1_id,
           owner_id: root_id,
           metadata: default_metadata(1),
-          approved_account_ids: {}, // TODO: shouldn't this be null until I impl it?
+          approved_account_ids: {},
         },
       ],
       nft_supply_for_owner_args: { account_id: alice_id },
@@ -174,19 +196,28 @@ workspace.test(
           token_id: token0_id,
           owner_id: alice_id,
           metadata: default_metadata(0),
-          approved_account_ids: {}, // TODO: shouldn't this be null until I impl it?
+          approved_account_ids: {},
         },
       ],
     });
   }
 );
 
-// TODO: important interface for these tests -> minting function that returns
-// one of:
-// - [owner_id, token_id]
-// - [owner_id, token_id][]
-// that function would allow for non-deterministic token_ids or even randomly
-// assigned ownership on minting
+workspace.test(
+  "nft-contract::approvals",
+  async (test, { contract, root, alice, bob }) => {
+    test.log(`alice: ${alice.accountId}`);
+    test.log(`bob: ${bob.accountId}`);
+    await assert_nep178_compliance({
+      test,
+      contract,
+      caller: root,
+      approved: [alice, bob],
+      mint: nft_mint_one,
+    });
+    test.log("Complies with NEP178");
+  }
+);
 
 // For more example tests, see:
 // https://github.com/near/workspaces-js/tree/main/__tests__

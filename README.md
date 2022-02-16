@@ -17,11 +17,11 @@ as some tests inside `testing`:
   - [ ] `nft_revoke_all`
   - [ ] `nft_is_approved`
   - [ ] `nft_on_approved`
-- [ ] NFT Enumeration (NEP181):
-  - [ ] `nft_total_supply`
-  - [ ] `nft_tokens`
-  - [ ] `nft_supply_for_owner`
-  - [ ] `nft_tokens_for_owner`
+- [x] NFT Enumeration (NEP181):
+  - [x] `nft_total_supply`
+  - [x] `nft_tokens`
+  - [x] `nft_supply_for_owner`
+  - [x] `nft_tokens_for_owner`
 - [ ] NFT Payouts (NEP199):
   - [ ] `nft_transfer_payout`
   - [ ] `nft_payout`

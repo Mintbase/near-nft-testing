@@ -1,8 +1,4 @@
-import {
-  fmt_bad_format,
-  is_null_or_primitive,
-  RpcAssertParams,
-} from "./test-utils";
+import { fmt_bad_format, RpcAssertParams, isStringOrNull } from "./test-utils";
 
 export interface Nep178ContractMetadata {
   spec: string;
@@ -40,22 +36,22 @@ export async function assert_nep177_compliance(
   );
 
   test.true(
-    is_null_or_primitive(response.icon, "string"),
+    isStringOrNull(response.icon),
     fmt_bad_format(contract_name, "response.icon", response.icon)
   );
 
   test.true(
-    is_null_or_primitive(response.base_uri, "string"),
+    isStringOrNull(response.base_uri),
     fmt_bad_format(contract_name, "response.base_uri", response.base_uri)
   );
 
   test.true(
-    is_null_or_primitive(response.reference, "string"),
+    isStringOrNull(response.reference),
     fmt_bad_format(contract_name, "response.reference", response.reference)
   );
 
   test.true(
-    is_null_or_primitive(response.reference_hash, "string"),
+    isStringOrNull(response.reference_hash),
     fmt_bad_format(
       contract_name,
       "response.reference_hash",
