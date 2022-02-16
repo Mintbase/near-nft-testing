@@ -78,12 +78,12 @@ export function isTokenMetadata(x: any): x is TokenMetadata {
   );
 }
 
-interface NftEventLogData {
+export type NftEventLogData = {
   standard: "nep171";
   version: "1.0.0";
   event: "nft_mint" | "nft_burn" | "nft_transfer";
   data: NftMintLog[] | NftTransferLog[] | NftBurnLog[];
-}
+};
 export function isNftEventLogData(x: any): x is NftEventLogData {
   if (x.standard !== "nep171") return false;
   if (x.version !== "1.0.0") return false;
@@ -94,11 +94,11 @@ export function isNftEventLogData(x: any): x is NftEventLogData {
   return false;
 }
 
-interface NftMintLog {
+export type NftMintLog = {
   owner_id: string;
   token_ids: string[];
   memo?: string;
-}
+};
 export function isNftMintLog(x: any): x is NftMintLog {
   return (
     typeof x.owner_id === "string" &&
@@ -107,12 +107,12 @@ export function isNftMintLog(x: any): x is NftMintLog {
   );
 }
 
-interface NftBurnLog {
+export type NftBurnLog = {
   owner_id: string;
   authorized_id?: string;
   token_ids: string[];
   memo?: string;
-}
+};
 export function isNftBurnLog(x: any): x is NftBurnLog {
   return (
     typeof x.owner_id === "string" &&
@@ -122,13 +122,13 @@ export function isNftBurnLog(x: any): x is NftBurnLog {
   );
 }
 
-interface NftTransferLog {
+export type NftTransferLog = {
   authorized_id?: string;
   old_owner_id: string;
   new_owner_id: string;
   token_ids: string[];
   memo?: string;
-}
+};
 export function isNftTransferLog(x: any): x is NftTransferLog {
   return (
     typeof x.old_owner_id === "string" &&
@@ -139,14 +139,29 @@ export function isNftTransferLog(x: any): x is NftTransferLog {
   );
 }
 
-// export type Payout = {
-//   // TODO:
-// };
+// export type Payout = Record<string, string>;
 
 // export function isPayout(x: any): x is Payout {
-//   // TODO:
-//   return false;
+//   return (
+//     x instanceof Object &&
+//     is_predicate_map<string>(x, (e) => typeof e === "string")
+//   );
 // }
+
+export type Payout = {
+  payout: Record<string, string>;
+};
+
+export function isPayout(x: any): x is Payout {
+  return (
+    x.payout instanceof Object &&
+    Object.keys(x.payout).every(
+      (account) =>
+        typeof account === "string" &&
+        is_predicate_map<string>(x.payout, (e) => typeof e === "string")
+    )
+  );
+}
 
 export type MintCallback = (args: {
   caller: NearAccount;
@@ -222,6 +237,13 @@ export function is_predicate_array(
 ): boolean {
   if (!(x instanceof Array)) return false;
   return x.every((e) => predicate(e));
+}
+
+export function is_predicate_map<T>(
+  x: any,
+  predicate: (_: T) => boolean
+): x is Record<string, T> {
+  return Object.keys(x).every((k) => predicate(x[k]));
 }
 
 // export async function mint_one({ contract, caller }, mint_spec: RpcCallSpec) {}

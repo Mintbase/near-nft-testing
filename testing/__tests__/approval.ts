@@ -55,31 +55,31 @@ export async function assert_nep178_compliance({
   await assertApprovals([true, false]);
   test.log("`nft_approve` ok");
 
-  // // nft_revoke
-  // await caller.call(
-  //   contract,
-  //   "nft_revoke",
-  //   {
-  //     token_id,
-  //     account_id: approved[0].accountId,
-  //   },
-  //   { attachedDeposit: "1" }
-  // );
-  // await assertApprovals([false, false]);
-  // test.log("`nft_revoke` ok");
+  // nft_revoke
+  await caller.call(
+    contract,
+    "nft_revoke",
+    {
+      token_id,
+      account_id: approved[0].accountId,
+    },
+    { attachedDeposit: "1" }
+  );
+  await assertApprovals([false, false]);
+  test.log("`nft_revoke` ok");
 
-  // // nft_revoke_all
-  // await approve(approved[0]);
-  // await approve(approved[1]);
-  // await assertApprovals([true, true]);
-  // await caller.call(
-  //   contract,
-  //   "nft_revoke_all",
-  //   {
-  //     token_id,
-  //   },
-  //   { attachedDeposit: "1" }
-  // );
-  // await assertApprovals([false, false]);
-  // test.log("`nft_revoke_all` ok");
+  // nft_revoke_all
+  await approve(approved[0]);
+  await approve(approved[1]);
+  await assertApprovals([true, true]);
+  await caller.call(
+    contract,
+    "nft_revoke_all",
+    {
+      token_id,
+    },
+    { attachedDeposit: "1" }
+  );
+  await assertApprovals([false, false]);
+  test.log("`nft_revoke_all` ok");
 }

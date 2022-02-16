@@ -1,15 +1,30 @@
 import { NearAccount, Workspace } from "near-workspaces-ava";
+// For example tests, see:
+// https://github.com/near/workspaces-js/tree/main/__tests__
 
 import { assert_nep171_compliance } from "./core";
 import { assert_nep177_compliance } from "./metadata";
 import { assert_nep178_compliance } from "./approval";
 import { assert_nep181_compliance } from "./enumeration";
 import { assert_nep297_compliance } from "./events";
+import { assert_nep199_compliance } from "./payouts";
 import * as util from "./test-utils";
 
 // We can init different workspaces for different contracts :)
 const TWENTY_NEAR = "20000000000000000000000000";
-const SIX_MILLINEAR = "6000000000000000000000";
+const MILLINEAR = [
+  "0",
+  "1000000000000000000000",
+  "2000000000000000000000",
+  "3000000000000000000000",
+  "4000000000000000000000",
+  "5000000000000000000000",
+  "6000000000000000000000",
+  "7000000000000000000000",
+  "8000000000000000000000",
+  "9000000000000000000000",
+];
+
 const workspace = Workspace.init(async ({ root }) => {
   // Create accounts
   const alice = await root.createAccount("alice", {
@@ -23,7 +38,7 @@ const workspace = Workspace.init(async ({ root }) => {
   const contract = await root.createAndDeploy(
     "nft-contract",
     "../target/wasm32-unknown-unknown/release/nft_contract.wasm",
-    { attachedDeposit: SIX_MILLINEAR }
+    { attachedDeposit: MILLINEAR[6] }
   );
 
   return { root, contract, alice, bob };
@@ -40,7 +55,7 @@ async function nft_mint_one({
     contract,
     "nft_mint",
     {},
-    { attachedDeposit: SIX_MILLINEAR }
+    { attachedDeposit: MILLINEAR[7] }
   );
   const event: any = JSON.parse(mint_call.logs[0].slice(11));
   // returns [token_id, owner_id]
@@ -115,7 +130,7 @@ workspace.test(
         mint_spec: {
           method: "nft_mint",
           args: {},
-          opts: { attachedDeposit: SIX_MILLINEAR },
+          opts: { attachedDeposit: MILLINEAR[7] },
         },
         // // transfer_spec is optional, because `nft_transfer` is part of the
         // // core standard
@@ -132,7 +147,6 @@ workspace.test(
         },
       }
     );
-    test.log("Complies with NEP297");
   }
 );
 
@@ -206,8 +220,6 @@ workspace.test(
 workspace.test(
   "nft-contract::approvals",
   async (test, { contract, root, alice, bob }) => {
-    test.log(`alice: ${alice.accountId}`);
-    test.log(`bob: ${bob.accountId}`);
     await assert_nep178_compliance({
       test,
       contract,
@@ -215,9 +227,18 @@ workspace.test(
       approved: [alice, bob],
       mint: nft_mint_one,
     });
-    test.log("Complies with NEP178");
   }
 );
 
-// For more example tests, see:
-// https://github.com/near/workspaces-js/tree/main/__tests__
+workspace.test(
+  "nft-contract::payouts",
+  async (test, { contract, root, alice }) => {
+    await assert_nep199_compliance({
+      test,
+      contract,
+      caller: root,
+      receiver: alice,
+      mint: nft_mint_one,
+    });
+  }
+);
